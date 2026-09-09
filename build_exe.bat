@@ -20,7 +20,7 @@ if errorlevel 1 (
 )
 
 echo [2/3] Building exe, this may take a few minutes...
-".venv\Scripts\python.exe" -m PyInstaller --noconfirm --clean --onefile --windowed --name HxSSH --hidden-import PySide6.QtCharts --exclude-module tkinter --exclude-module PyQt5 --exclude-module PyQt6 --exclude-module tests main.py
+".venv\Scripts\python.exe" -m PyInstaller --noconfirm --clean --onefile --windowed --name HxSSH --icon "assets\icon.ico" --add-data "assets;assets" --hidden-import PySide6.QtCharts --exclude-module tkinter --exclude-module PyQt5 --exclude-module PyQt6 --exclude-module tests main.py
 if errorlevel 1 (
   echo [ERROR] PyInstaller build failed.
   if not defined HXSSH_NO_PAUSE pause

@@ -1,11 +1,14 @@
 """主窗口：登录页 ↔ 监控仪表盘 切换与后台线程编排。"""
 from __future__ import annotations
 
-from PySide6.QtWidgets import (QInputDialog, QLineEdit, QMainWindow,
-                               QMessageBox, QStackedWidget)
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (QApplication, QInputDialog, QLineEdit,
+                               QMainWindow, QMessageBox, QStackedWidget)
 
 from .. import config
+from .. import utils
 from ..ssh_worker import SshWorker
+from ..ui.styles import build_stylesheet
 from .dashboard import Dashboard
 from .login import LoginWidget
 
@@ -18,19 +21,23 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle('HxSSH 远程监控')
         self.resize(1060, 690)
-        self.setMinimumSize(880, 600)
+        self.setMinimumSize(800, 600)
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
+        # 允许极限压缩：尺寸不足时由分割器收起卡片、表格横向滚动
+        self.stack.setMinimumSize(0, 0)
         self.login = LoginWidget(self._cfg)
-        self.dash = Dashboard(self._cfg.get('interval', 2))
+        self.dash = Dashboard(self._cfg.get('interval', 2), self._cfg.get('font_size', 13), self._cfg)
         self.stack.addWidget(self.login)
         self.stack.addWidget(self.dash)
 
         self.login.connect_requested.connect(self._start_connect)
         self.dash.disconnect_requested.connect(self._disconnect)
         self.dash.interval_changed.connect(self._change_interval)
+        self.dash.font_changed.connect(self._change_font)
         self.dash.kill_requested.connect(self._kill)
+        self.dash.topmost_changed.connect(self._set_topmost)
 
     # ------ 连接生命周期 ------
     def _start_connect(self, cfg):
@@ -81,6 +88,23 @@ class MainWindow(QMainWindow):
         self._cfg['interval'] = v
         if self.worker:
             self.worker.interval = v
+        config.save(self._cfg)
+
+    def _change_font(self, px):
+        utils.BASE_FONT_PX = int(px)
+        QApplication.instance().setStyleSheet(build_stylesheet(utils.BASE_FONT_PX))
+        self._cfg['font_size'] = int(px)
+        config.save(self._cfg)
+
+    def _set_topmost(self, on):
+        flags = self.windowFlags()
+        if on:
+            flags |= Qt.WindowStaysOnTopHint
+        else:
+            flags &= ~Qt.WindowStaysOnTopHint
+        self.setWindowFlags(flags)
+        self.show()
+        self._cfg['always_on_top'] = on
         config.save(self._cfg)
 
     def _kill(self, pid, cmd):

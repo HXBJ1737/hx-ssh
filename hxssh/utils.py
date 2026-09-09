@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 
+BASE_FONT_PX = 10  # 全局基准字号，入口/主窗口按设置修改
+
+
 def clamp(v, lo, hi):
     return lo if v < lo else hi if v > hi else v
 

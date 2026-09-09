@@ -10,6 +10,7 @@ from PySide6.QtCore import QMargins, QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import QFrame, QGridLayout, QLabel, QVBoxLayout, QWidget
 
+from .. import utils
 from ..utils import clamp, level_color
 
 
@@ -41,7 +42,7 @@ class MiniBar(QWidget):
         self._right = ''
         self._pct = 0.0
         self.setMinimumHeight(22)
-        self.setMinimumWidth(130)
+        self.setMinimumWidth(80)
 
     def set_value(self, label, pct, right=''):
         self._label = label
@@ -62,7 +63,7 @@ class MiniBar(QWidget):
             p.drawRoundedRect(QRectF(r.left(), r.top(), fw, r.height()), 6, 6)
         p.setPen(QColor('#c9cedb'))
         f = QFont()
-        f.setPixelSize(11)
+        f.setPixelSize(max(9, utils.BASE_FONT_PX - 2))
         p.setFont(f)
         tr = r.adjusted(8, 0, -8, 0)
         p.drawText(tr, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter, self._label)
@@ -86,7 +87,7 @@ class CoreGridWidget(QWidget):
                 self._grid.removeWidget(b)
                 b.deleteLater()
             self._bars = []
-            cols = 2 if n <= 4 else max(2, math.ceil(n / 8))
+            cols = 1 if n <= 4 else max(2, math.ceil(n / 8))
             for i in range(n):
                 b = MiniBar(self)
                 self._bars.append(b)
@@ -143,7 +144,7 @@ class LineChart(QChartView):
             ax.setGridLineColor(QColor('#2b2e37'))
             ax.setLineVisible(False)
             f = ax.labelsFont()
-            f.setPixelSize(10)
+            f.setPixelSize(max(8, utils.BASE_FONT_PX - 3))
             ax.setLabelsFont(f)
 
         chart.addAxis(ax_x, Qt.AlignmentFlag.AlignBottom)

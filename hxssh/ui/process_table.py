@@ -28,8 +28,8 @@ class NumItem(QTableWidgetItem):
 class ProcessTable(QWidget):
     kill_requested = Signal(int, str)
 
-    COLS = [('PID', 70), ('用户', 95), ('CPU%', 75), ('内存', 95), ('内存%', 75),
-            ('状态', 70), ('启动', 75), ('CPU时间', 85), ('命令', 0)]
+    COLS = [('PID', 50), ('用户', 50), ('CPU%', 60), ('内存', 60), ('内存%', 55),
+            ('状态', 50), ('启动', 60), ('t(CPU)', 60), ('命令', 0)]
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -41,11 +41,12 @@ class ProcessTable(QWidget):
         self.ed_search = QLineEdit()
         self.ed_search.setPlaceholderText('搜索进程名 / 用户 / PID')
         self.ed_search.setClearButtonEnabled(True)
-        self.ed_search.setFixedWidth(260)
+        self.ed_search.setMinimumWidth(50)
+        self.ed_search.setMaximumWidth(260)
         self.cb_pause = QCheckBox('暂停刷新')
         self.lb_count = QLabel('')
         self.lb_count.setObjectName('SubTitle')
-        self.btn_kill = QPushButton('结束进程 (SIGKILL)')
+        self.btn_kill = QPushButton('结束进程')
         self.btn_kill.setObjectName('Danger')
         self.btn_kill.setToolTip('对选中进程执行 kill -9（不可恢复）；\n权限不足时自动用 sudo 提权重试')
         bar.addWidget(self.ed_search)
@@ -68,7 +69,7 @@ class ProcessTable(QWidget):
             self.table.setColumnWidth(i, w)
         header.setSortIndicator(2, Qt.SortOrder.DescendingOrder)  # 默认按 CPU% 排序
         self.table.setSortingEnabled(True)
-        self.table.setMinimumHeight(140)
+        self.table.setMinimumHeight(100)
         v.addWidget(self.table, 1)
 
         self._procs = []

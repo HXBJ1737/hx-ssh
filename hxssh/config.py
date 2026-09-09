@@ -16,6 +16,8 @@ DEFAULTS = {
     'key_pass': '',
     'remember': False,
     'interval': 2,
+    'font_size': 13,
+    'always_on_top': False,
 }
 
 

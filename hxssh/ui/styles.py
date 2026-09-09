@@ -1,11 +1,12 @@
-STYLESHEET = """
-* { font-size: 13px; }
+ # __BASE__ 全局字号，__BIG__/__TITLE__ 按基准推导
+_TEMPLATE = """
+* { font-size: __BASE__px; }
 QMainWindow, QWidget#LoginRoot { background: #17181d; }
 QFrame[card="true"] { background: #202229; border: 1px solid #2d3038; border-radius: 12px; }
 QLabel { color: #d7dae0; background: transparent; }
-QLabel#BigTitle { font-size: 22px; font-weight: 700; color: #ffffff; }
-QLabel#SubTitle { color: #8f96a3; }
-QLabel#CardTitle { color: #8f96a3; font-size: 12px; font-weight: 600; letter-spacing: 1px; }
+QLabel#BigTitle { font-size: __BIG__px; font-weight: 700; color: #ffffff; }
+QLabel#SubTitle { color: #8f96a3; font-size: __BASE__px; }
+QLabel#CardTitle { color: #8f96a3; font-size: __TITLE__px; font-weight: 600; letter-spacing: 1px; }
 QLabel#InfoText { color: #b8bec9; }
 QLabel#ErrorText { color: #f28b82; }
 QLineEdit, QSpinBox, QComboBox {
@@ -62,3 +63,15 @@ QSplitter::handle:vertical {
 QSplitter::handle:vertical:hover { background: #4f8cff; }
 QChartView { background: transparent; border: none; }
 """
+
+
+def build_stylesheet(base: int = 13) -> str:
+    """按基准字号生成全局样式。"""
+    base = max(10, int(base))
+    return (_TEMPLATE
+            .replace('__BASE__', str(base))
+            .replace('__BIG__', str(base + 9))
+            .replace('__TITLE__', str(max(10, base - 1))))
+
+
+STYLESHEET = build_stylesheet()

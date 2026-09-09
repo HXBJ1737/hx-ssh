@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QGridLayout, QHBoxLayout,
-                               QLabel, QPushButton, QScrollArea, QSplitter,
-                               QVBoxLayout, QWidget)
+                               QLabel, QPushButton, QScrollArea, QSizePolicy,
+                               QSplitter, QVBoxLayout, QWidget)
 
 from ..utils import fmt_bytes, fmt_kb, fmt_rate, fmt_uptime
 from .process_table import ProcessTable
@@ -14,13 +14,16 @@ from .widgets import Card, CoreGridWidget, LineChart, MiniBar
 class Dashboard(QWidget):
     disconnect_requested = Signal()
     interval_changed = Signal(float)
+    font_changed = Signal(int)
     kill_requested = Signal(int, str)
+    topmost_changed = Signal(bool)
 
-    def __init__(self, interval=2.0, parent=None):
+    def __init__(self, interval=2.0, font_px=13, cfg=None, parent=None):
         super().__init__(parent)
         self._base = ''
         self._disk_keys = []
         self._disk_bars = {}
+        self._cfg = cfg or {}
 
         root = QVBoxLayout(self)
         root.setContentsMargins(12, 10, 12, 12)
@@ -30,16 +33,24 @@ class Dashboard(QWidget):
         top = QHBoxLayout()
         self.lb_info = QLabel('未连接')
         self.lb_info.setObjectName('InfoText')
+        self.lb_info.setMinimumWidth(0)
+        self.lb_info.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.cb_interval = QComboBox()
         for s in (1, 2, 3, 5):
             self.cb_interval.addItem(f'{s} 秒', s)
         idx = self.cb_interval.findData(int(interval))
         self.cb_interval.setCurrentIndex(idx if idx >= 0 else 1)
+        self.cb_font = QComboBox()
+        for label, px in (('小', 12), ('标准', 13), ('大', 14), ('特大', 16)):
+            self.cb_font.addItem(f'字体 {label}', px)
+        fidx = self.cb_font.findData(int(font_px))
+        self.cb_font.setCurrentIndex(fidx if fidx >= 0 else 1)
         btn_disc = QPushButton('断开连接')
         btn_disc.clicked.connect(self.disconnect_requested.emit)
         top.addWidget(self.lb_info, 1)
         top.addWidget(QLabel('刷新间隔'))
         top.addWidget(self.cb_interval)
+        top.addWidget(self.cb_font)
         top.addSpacing(6)
         self.cb_disk = QCheckBox('磁盘')
         self.cb_net = QCheckBox('网络')
@@ -48,6 +59,9 @@ class Dashboard(QWidget):
         top.addWidget(self.cb_disk)
         top.addWidget(self.cb_net)
         top.addSpacing(6)
+        self.cb_topmost = QCheckBox('置顶')
+        self.cb_topmost.setChecked(self._cfg.get('always_on_top', False))
+        top.addWidget(self.cb_topmost)
         top.addWidget(btn_disc)
         root.addLayout(top)
 
@@ -76,8 +90,10 @@ class Dashboard(QWidget):
 
         btn_disc.clicked.connect(self.disconnect_requested.emit)
         self.cb_interval.currentIndexChanged.connect(self._interval_changed)
+        self.cb_font.currentIndexChanged.connect(self._font_changed)
         self.cb_disk.toggled.connect(self._update_card_layout)
         self.cb_net.toggled.connect(self._update_card_layout)
+        self.cb_topmost.toggled.connect(self.topmost_toggled)
         self.ptable.kill_requested.connect(self.kill_requested.emit)
 
     # ------ 卡片开关 ------
@@ -106,10 +122,9 @@ class Dashboard(QWidget):
         row = QHBoxLayout()
         row.setSpacing(10)
         self.cpu_chart = LineChart([('CPU %', '#4f8cff')], y_max=100)
-        self.cpu_chart.setMinimumHeight(90)
-        self.cpu_chart.setMinimumWidth(260)
+        self.cpu_chart.setMinimumHeight(50)
         self.cores = CoreGridWidget()
-        self.cores.setMinimumWidth(280)
+        self.cores.setMinimumWidth(150)
         self.cores.setMaximumWidth(640)
         row.addWidget(self.cpu_chart, 3)
         row.addWidget(self.cores, 2)
@@ -153,7 +168,7 @@ class Dashboard(QWidget):
         nrow.addWidget(self.lb_net_total)
         self.net_card.body.addLayout(nrow)
         self.net_chart = LineChart([('下行 RX', '#3fb27f'), ('上行 TX', '#f2a33c')])
-        self.net_chart.setMinimumHeight(80)
+        self.net_chart.setMinimumHeight(50)
         self.net_card.body.addWidget(self.net_chart)
 
         grid.addWidget(self.cpu_card, 0, 0)
@@ -167,6 +182,12 @@ class Dashboard(QWidget):
     # ------ 槽 ------
     def _interval_changed(self):
         self.interval_changed.emit(float(self.cb_interval.currentData() or 2))
+
+    def _font_changed(self):
+        self.font_changed.emit(int(self.cb_font.currentData() or 13))
+
+    def topmost_toggled(self, checked):
+        self.topmost_changed.emit(checked)
 
     def set_sysinfo(self, info):
         self._base = (f"{info.get('host', '')}  ·  {info.get('os', '')}  ·  "

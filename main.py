@@ -5,8 +5,9 @@ import sys
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
+from hxssh import config, utils
 from hxssh.ui.main_window import MainWindow
-from hxssh.ui.styles import STYLESHEET
+from hxssh.ui.styles import build_stylesheet
 
 
 def _asset_path(rel):
@@ -21,8 +22,9 @@ def main():
     icon = _asset_path(os.path.join('assets', 'icon.ico'))
     if os.path.exists(icon):
         app.setWindowIcon(QIcon(icon))
+    utils.BASE_FONT_PX = int(config.load().get('font_size', 13))
     app.setStyle('Fusion')
-    app.setStyleSheet(STYLESHEET)
+    app.setStyleSheet(build_stylesheet(utils.BASE_FONT_PX))
     w = MainWindow()
     w.show()
     sys.exit(app.exec())

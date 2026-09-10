@@ -1,7 +1,7 @@
 # HxSSH 远程监控
 
 一个只做一件事的 SSH 工具：连接成功后，图形化实时显示远端 Linux 服务器的 CPU、内存、磁盘、网络与进程。
-
+![alt text](assets/image.png)
 ## 功能
 
 - SSH 连接：密码或私钥（Ed25519 / RSA / ECDSA），可记住连接信息
